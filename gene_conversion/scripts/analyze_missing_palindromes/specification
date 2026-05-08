@@ -1,0 +1,45 @@
+# Palindrome Copy Number & Indel Analysis
+ 
+## Inputs
+```
+QUERY=<single-sequence FASTA, one palindrome arm or full palindrome>
+ASSEMBLY_DIR=<directory of assembly FASTAs>
+ASSEMBLY_EXT=<fa|fasta|fna>
+OUTDIR=<output directory>
+LARGE_INDEL_THRESHOLD=<min gap size to report, bp, e.g. 50>
+```
+ 
+## BLAST
+For each assembly: run `makeblastdb -dbtype nucl`, then `blastn` with `-task blastn -dust no -perc_identity 95 -word_size 11` and outfmt:
+```
+6 qseqid sseqid pident length qlen qstart qend sstart send gapopen gaps btop
+```
+Save raw output to `OUTDIR/blast_raw/<assembly_name>.tsv`.
+ 
+## Parse (`parse_blast.py`)
+Per hit, compute:
+ 
+- **qcov** = `(qend - qstart + 1) / qlen * 100`
+- **Large indels**: parse `btop` for gap runs ≥ `LARGE_INDEL_THRESHOLD`; record size and type (insertion = gap in subject, deletion = gap in query). In btop: integers = matched bases, dash runs = gaps.
+Filter: keep hits with qcov ≥ 80%. Strand: minus if `sstart > send`.
+ 
+**Note on palindrome structure**: expect hits on **both strands** — the two arms of a palindrome are inverted repeats, so one copy will hit the plus strand and one the minus strand. A same-strand pair of hits may indicate a non-canonical structure and should be flagged.
+ 
+Outputs:
+ 
+- `OUTDIR/summary.tsv`: one row per hit — `assembly | hit_num | subject_seq | sstart | send | strand | pident | qcov | n_large_indels | indel_details`
+- `OUTDIR/per_assembly_counts.tsv`: `assembly | total_hits | hits_with_large_indels`
+## Flags
+Write `OUTDIR/flagged_assemblies.txt` for any assembly where:
+ 
+- hit count ≠ 2
+- any hit has qcov < 90%
+- both hits are on the same strand (unexpected for a palindrome)
+- hits on the same contig overlap > 50% of query length
+## Cleanup
+Delete BLAST db files after all assemblies are processed (skip if `--keep-db`).
+ 
+## Notes
+- Discover assemblies dynamically from `ASSEMBLY_DIR`
+- Write a zero-hit row for assemblies with no BLAST hits
+- All output under `OUTDIR`
