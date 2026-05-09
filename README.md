@@ -1,10 +1,10 @@
 # Human Y Chromosome Palindromes & Gene Conversion
 
-Computational pipeline to identify palindromic regions on the human Y chromosome and characterize intramolecular gene conversion events within them.
+Computational pipeline to identify palindromic regions on the human Y chromosome and characterize palindrome aided gene conversion events within.
 
 ## Overview
 
-Two sub-pipelines:
+Two pipelines:
 
 **`palindromes/`** — Discovers and catalogs Y chromosome palindromes across samples.
 1. Self-aligns masked Y chromosome sequences with LASTZ to find inverted repeats.
